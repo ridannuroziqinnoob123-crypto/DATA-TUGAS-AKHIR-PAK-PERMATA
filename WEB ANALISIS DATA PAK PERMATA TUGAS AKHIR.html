@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Ultimate Shiny-Style 2026</title>
+    <title>Dashboard Offline Shiny-Style</title>
     
-    <!-- LIBRARIES CDN -->
+    <!-- LIBRARIES CDN (Hanya perlu internet saat pertama kali buka) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -32,19 +32,6 @@
             font-family: 'Inter', system-ui, sans-serif; background: var(--bg);
             color: var(--text); transition: var(--transition); display: flex; min-height: 100vh;
         }
-
-        /* LOADING OVERLAY */
-        #loading-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-            display: none; justify-content: center; align-items: center; z-index: 9999;
-        }
-        .loader { width: 40px; height: 40px; border: 4px solid var(--bg);
-            border-top: 4px solid var(--primary); border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* SIDEBAR & MAIN */
         .sidebar { width: 260px; background: var(--sidebar-bg); color: var(--sidebar-text);
             padding: 1.5rem 1rem; display: flex; flex-direction: column; transition: var(--transition); z-index: 100; }
         .brand { font-size: 1.3rem; font-weight: 700; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; }
@@ -56,7 +43,7 @@
         .topbar { display: flex; justify-content: space-between; align-items: center;
             padding: 1rem 1.5rem; background: var(--card-bg); border-bottom: 1px solid var(--border); }
         .topbar h2 { font-size: 1.2rem; }
-        .topbar-actions { display: flex; gap: 0.6rem; align-items: center; }
+        .topbar-actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
         .btn { background: none; border: 1px solid var(--border); color: var(--text);
             padding: 0.5rem 0.8rem; border-radius: 6px; cursor: pointer; display: flex;
             align-items: center; gap: 0.4rem; transition: var(--transition); font-size: 0.85rem; }
@@ -64,7 +51,6 @@
         .menu-toggle { display: none; background: none; border: none; font-size: 1.2rem; color: var(--text); cursor: pointer; }
         .content { padding: 1.5rem; overflow-y: auto; }
 
-        /* FILTER & KPI */
         .filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;
             background: var(--card-bg); padding: 1rem; border-radius: 10px; box-shadow: var(--shadow); margin-bottom: 1.5rem; }
         .filter-group { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -81,7 +67,6 @@
         .kpi-trend { font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem; }
         .trend-up { color: var(--success); } .trend-down { color: var(--danger); }
 
-        /* TABS & CHARTS */
         .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
         .tab-btn { padding: 0.8rem 1.2rem; background: none; border: none; cursor: pointer;
             color: var(--text-secondary); font-weight: 500; position: relative; }
@@ -100,22 +85,17 @@
         th { background: var(--primary); color: white; font-weight: 600; }
         tr:hover { background: var(--bg); }
 
-        /* RESPONSIVE */
         @media (max-width: 900px) {
             .sidebar { position: fixed; left: -260px; height: 100%; }
             .sidebar.open { left: 0; box-shadow: 4px 0 15px rgba(0,0,0,0.3); }
             .main { margin-left: 0; } .menu-toggle { display: block; }
-            .topbar-actions { flex-wrap: wrap; }
         }
     </style>
 </head>
 <body>
 
-<!-- LOADING OVERLAY -->
-<div id="loading-overlay"><div class="loader"></div></div>
-
 <aside class="sidebar" id="sidebar">
-    <div class="brand"><i class="fa-solid fa-chart-line"></i> ShinyDash Ultimate</div>
+    <div class="brand"><i class="fa-solid fa-chart-line"></i> ShinyDash Offline</div>
     <ul class="nav-list">
         <li class="nav-item"><a class="nav-link active" data-tab="dashboard"><i class="fa-solid fa-house"></i> Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" data-tab="analytics"><i class="fa-solid fa-magnifying-glass-chart"></i> Analisis</a></li>
@@ -129,7 +109,7 @@
         <button class="menu-toggle" id="menuToggle"><i class="fa-solid fa-bars"></i></button>
         <h2>📊 Overview Penjualan</h2>
         <div class="topbar-actions">
-            <button class="btn" id="btnRefresh" title="Ambil Data dari API"><i class="fa-solid fa-rotate"></i> Sync API</button>
+            <button class="btn" id="btnReset" title="Reset Filter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
             <button class="btn" onclick="exportToPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
             <button class="btn" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
             <button class="btn" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
@@ -148,14 +128,13 @@
                     <option value="Elektronik">Elektronik</option><option value="Fashion">Fashion</option>
                     <option value="Makanan">Makanan</option><option value="Buku">Buku</option><option value="Olahraga">Olahraga</option></select>
             </div>
-            <button class="btn" id="resetFilters" style="margin-top: 1.4rem;"><i class="fa-solid fa-rotate-left"></i> Reset</button>
         </div>
 
         <div class="kpi-grid sortable-kpi" id="kpiGrid">
             <div class="kpi-card" style="border-left-color: var(--primary);" data-id="kpiRev">
                 <i class="fa-solid fa-grip-vertical drag-handle"></i>
                 <div class="kpi-title">Total Pendapatan</div><div class="kpi-value" id="kpiRevenue">Rp 0</div>
-                <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> <span id="kpiRevTrend">+0%</span> vs bulan lalu</div>
+                <div class="kpi-trend trend-up"><i class="fa-solid fa-arrow-trend-up"></i> <span id="kpiRevTrend">+12.4%</span> vs periode lalu</div>
             </div>
             <div class="kpi-card" style="border-left-color: var(--success);" data-id="kpiUnit">
                 <i class="fa-solid fa-grip-vertical drag-handle"></i>
@@ -205,95 +184,54 @@
         <div id="tab-settings" class="tab-content">
             <div class="chart-box" style="max-width:500px;">
                 <h3 style="margin-bottom:1rem;">⚙️ Preferensi Sistem</h3>
-                <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.8rem;">
-                    <input type="checkbox" id="settingAutoRefresh" checked> Refresh data otomatis (simulasi)
-                </label>
-                <button class="btn" onclick="alert('Layout disimpan ke LocalStorage!')">💾 Simpan Posisi Widget</button>
-                <button class="btn" style="margin-top:0.5rem;background:var(--danger);color:white;" onclick="clearLayoutCache()">🗑️ Reset Layout</button>
+                <button class="btn" onclick="saveLayout()"><i class="fa-solid fa-floppy-disk"></i> Simpan Posisi Widget</button>
+                <button class="btn" style="margin-top:0.5rem;background:var(--danger);color:white;" onclick="clearLayoutCache()"><i class="fa-solid fa-trash-can"></i> Reset Layout</button>
             </div>
         </div>
     </div>
 </main>
 
 <script>
-    // 🔹 STATE & DEFAULT DATA
-    let state = { month: 'all', category: 'all', dataLoaded: false };
-    let charts = {};
-    let rawMockData = {};
-
-    // 🔹 SIMULASI FETCH API - Data dimuat otomatis saat halaman load
-    async function fetchAPIData() {
-        showLoading(true);
-        try {
-            // Simulasi delay jaringan minimal (500ms untuk UX yang baik)
-            await new Promise(res => setTimeout(res, 500));
-            
-            rawMockData = {
-                categories: ['Elektronik', 'Fashion', 'Makanan', 'Buku', 'Olahraga'],
-                months: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
-                units: {
-                    'Elektronik': [80, 95, 110, 120, 130, 145], 
-                    'Fashion': [60, 65, 70, 75, 85, 90],
-                    'Makanan': [45, 48, 50, 55, 60, 65], 
-                    'Buku': [20, 22, 25, 28, 30, 32],
-                    'Olahraga': [15, 16, 18, 20, 22, 25]
-                },
-                revenue: {
-                    'Elektronik': [24, 28.5, 33, 36, 39, 43.5], 
-                    'Fashion': [12, 13, 14, 15, 17, 18],
-                    'Makanan': [6.75, 7.2, 7.5, 8.25, 9, 9.75], 
-                    'Buku': [3, 3.3, 3.75, 4.2, 4.5, 4.8],
-                    'Olahraga': [2.25, 2.4, 2.7, 3, 3.3, 3.75]
-                }
-            };
-            state.dataLoaded = true;
-            updateDashboard();
-            console.log('✅ Data berhasil dimuat');
-        } catch(e) {
-            console.error('❌ Error loading data:', e);
-            alert('Gagal memuat data. Silakan refresh halaman.');
-        } finally {
-            showLoading(false);
+    // 🔹 DATA TERTANAM (TANPA API)
+    const RAW_DATA = {
+        categories: ['Elektronik', 'Fashion', 'Makanan', 'Buku', 'Olahraga'],
+        months: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+        units: {
+            'Elektronik': [80, 95, 110, 120, 130, 145], 'Fashion': [60, 65, 70, 75, 85, 90],
+            'Makanan': [45, 48, 50, 55, 60, 65], 'Buku': [20, 22, 25, 28, 30, 32],
+            'Olahraga': [15, 16, 18, 20, 22, 25]
+        },
+        revenue: { // dalam jutaan
+            'Elektronik': [24, 28.5, 33, 36, 39, 43.5], 'Fashion': [12, 13, 14, 15, 17, 18],
+            'Makanan': [6.75, 7.2, 7.5, 8.25, 9, 9.75], 'Buku': [3, 3.3, 3.75, 4.2, 4.5, 4.8],
+            'Olahraga': [2.25, 2.4, 2.7, 3, 3.3, 3.75]
         }
-    }
+    };
 
-    function showLoading(show) { 
-        document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; 
-    }
+    let state = { month: 'all', category: 'all' };
+    let charts = {};
 
     // 🔹 KALKULASI REAKTIF
     function calculateMetrics() {
-        if (!rawMockData.categories) return { fUnits: {}, fRevenue: {}, totalUnits: 0, totalRevenue: 0, filtered: [], percentages: [], avg: 0 };
-        
         let fUnits = {}, fRevenue = {}, totalUnits = 0, totalRevenue = 0;
-        const cats = rawMockData.categories;
         const range = state.month === 'all' ? [0,1,2,3,4,5] : [parseInt(state.month)];
         
-        cats.forEach(cat => {
+        RAW_DATA.categories.forEach(cat => {
             let u = 0, r = 0;
-            range.forEach(m => { 
-                u += rawMockData.units[cat][m] || 0; 
-                r += rawMockData.revenue[cat][m] || 0; 
-            });
-            fUnits[cat] = u; 
-            fRevenue[cat] = r;
+            range.forEach(m => { u += RAW_DATA.units[cat][m]; r += RAW_DATA.revenue[cat][m]; });
+            fUnits[cat] = u; fRevenue[cat] = r;
         });
 
-        const filtered = state.category === 'all' ? cats : [state.category];
-        filtered.forEach(c => { 
-            totalUnits += fUnits[c] || 0; 
-            totalRevenue += fRevenue[c] || 0; 
-        });
+        const filtered = state.category === 'all' ? RAW_DATA.categories : [state.category];
+        filtered.forEach(c => { totalUnits += fUnits[c]; totalRevenue += fRevenue[c]; });
         const percentages = filtered.map(c => totalUnits ? ((fUnits[c] / totalUnits) * 100).toFixed(1) : 0);
         return { fUnits, fRevenue, totalUnits, totalRevenue, filtered, percentages, avg: filtered.length ? Math.round(totalUnits / filtered.length) : 0 };
     }
 
-    // 🔹 UPDATE DASHBOARD
+    // 🔹 UPDATE UI
     function updateDashboard() {
-        if (!state.dataLoaded) return;
         const m = calculateMetrics();
 
-        // KPI
         document.getElementById('kpiRevenue').textContent = `Rp ${(m.totalRevenue * 1e6).toLocaleString('id-ID')}`;
         document.getElementById('kpiUnits').textContent = m.totalUnits.toLocaleString('id-ID');
         document.getElementById('kpiAvg').textContent = m.avg.toLocaleString('id-ID');
@@ -301,7 +239,6 @@
         document.getElementById('kpiGrowth').textContent = growth;
         document.getElementById('kpiRevTrend').textContent = growth;
 
-        // Table
         const tbody = document.getElementById('dataTableBody');
         tbody.innerHTML = '';
         m.filtered.forEach((cat, i) => {
@@ -314,174 +251,91 @@
     }
 
     function updateCharts(m) {
-        if (!charts.pie) return; // Safety check
-        
         const labels = m.filtered;
         const colors = ['#3498db', '#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6'];
 
-        try {
-            // Pie
-            charts.pie.data.labels = labels;
-            charts.pie.data.datasets[0].data = labels.map(c => m.fUnits[c]);
-            charts.pie.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
-            charts.pie.update('active');
+        charts.pie.data.labels = labels;
+        charts.pie.data.datasets[0].data = labels.map(c => m.fUnits[c]);
+        charts.pie.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
+        charts.pie.update('active');
 
-            // Bar
-            charts.bar.data.labels = labels;
-            charts.bar.data.datasets[0].data = labels.map(c => m.fUnits[c]);
-            charts.bar.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
-            charts.bar.update('active');
+        charts.bar.data.labels = labels;
+        charts.bar.data.datasets[0].data = labels.map(c => m.fUnits[c]);
+        charts.bar.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
+        charts.bar.update('active');
 
-            // Line
-            charts.line.data.labels = rawMockData.months;
-            charts.line.data.datasets[0].data = rawMockData.months.map((_, i) => 
-                labels.reduce((sum, c) => sum + (rawMockData.units[c][i] || 0), 0));
-            charts.line.update('active');
+        charts.line.data.labels = RAW_DATA.months;
+        charts.line.data.datasets[0].data = RAW_DATA.months.map((_, i) => 
+            labels.reduce((sum, c) => sum + RAW_DATA.units[c][i], 0));
+        charts.line.update('active');
 
-            // Scatter
-            charts.scatter.data.datasets[0].data = labels.map(c => ({
-                x: Math.round((m.fRevenue[c] / m.fUnits[c]) * 1000000),
-                y: m.fUnits[c], label: c
-            }));
-            charts.scatter.update('active');
-        } catch(e) {
-            console.error('Error updating charts:', e);
-        }
+        charts.scatter.data.datasets[0].data = labels.map(c => ({
+            x: Math.round((m.fRevenue[c] / m.fUnits[c]) * 1000000),
+            y: m.fUnits[c], label: c
+        }));
+        charts.scatter.update('active');
     }
 
-    // 🔹 INISIALISASI CHART & ANIMASI
+    // 🔹 INISIALISASI CHART
     function initCharts() {
-        try {
-            const animConfig = { animation: { duration: 900, easing: 'easeOutQuart' } };
-            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#2c3e50';
-            const textSecondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#7f8c8d';
-            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#e0e6ed';
+        const anim = { animation: { duration: 800, easing: 'easeOutQuart' } };
+        const baseOpts = () => ({
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' }, title: { display: false } },
+            scales: { 
+                x: { grid: { display: false } }, 
+                y: { grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') } } 
+            },
+            ...anim
+        });
 
-            const baseOpts = {
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { position: 'bottom', labels: { color: textColor } }, 
-                    title: { display: false } 
-                },
-                scales: { 
-                    x: { ticks: { color: textSecondaryColor }, grid: { color: gridColor } },
-                    y: { ticks: { color: textSecondaryColor }, grid: { color: gridColor } }
-                },
-                ...animConfig
-            };
+        charts.pie = new Chart(document.getElementById('pieChart'), {
+            type: 'pie', data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 2, borderColor: '#fff' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, ...anim }
+        });
 
-            charts.pie = new Chart(document.getElementById('pieChart'), {
-                type: 'pie', 
-                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 2, borderColor: '#fff' }] },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { position: 'right' }, 
-                        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} unit` } } 
-                    }, 
-                    ...animConfig
-                }
-            });
+        charts.bar = new Chart(document.getElementById('barChart'), {
+            type: 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 6 }] },
+            options: { ...baseOpts(), plugins: { legend: { display: false } }, scales: { ...baseOpts().scales, y: { ...baseOpts().scales.y, beginAtZero: true } } }
+        });
 
-            charts.bar = new Chart(document.getElementById('barChart'), {
-                type: 'bar', 
-                data: { labels: [], datasets: [{ label: 'Unit', data: [], backgroundColor: [], borderRadius: 6 }] },
-                options: { 
-                    ...baseOpts, 
-                    plugins: { legend: { display: false } }, 
-                    scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, beginAtZero: true } } 
-                }
-            });
+        charts.line = new Chart(document.getElementById('lineChart'), {
+            type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: '#3498db', tension: 0.4, fill: true, backgroundColor: 'rgba(52,152,219,0.15)' }] },
+            options: { ...baseOpts(), plugins: { legend: { display: false } } }
+        });
 
-            charts.line = new Chart(document.getElementById('lineChart'), {
-                type: 'line', 
-                data: { labels: [], datasets: [{ label: 'Tren', data: [], borderColor: '#3498db', tension: 0.4, fill: true, backgroundColor: 'rgba(52,152,219,0.15)' }] },
-                options: { ...baseOpts, plugins: { legend: { display: false } } }
-            });
-
-            charts.scatter = new Chart(document.getElementById('scatterChart'), {
-                type: 'scatter', 
-                data: { datasets: [{ label: 'Harga vs Volume', data: [], backgroundColor: '#9b59b6', pointRadius: 8, pointHoverRadius: 12 }] },
-                options: { 
-                    ...baseOpts, 
-                    scales: { 
-                        x: { ...baseOpts.scales.x, title: { display: true, text: 'Harga Rata-rata (Rp)' } }, 
-                        y: { ...baseOpts.scales.y, title: { display: true, text: 'Volume Terjual' } } 
-                    } 
-                }
-            });
-            
-            console.log('✅ Charts initialized successfully');
-        } catch(e) {
-            console.error('❌ Error initializing charts:', e);
-        }
+        charts.scatter = new Chart(document.getElementById('scatterChart'), {
+            type: 'scatter', data: { datasets: [{ data: [], backgroundColor: '#9b59b6', pointRadius: 8 }] },
+            options: { ...baseOpts(), scales: { x: { title: { display: true, text: 'Harga Rata-rata (Rp)' } }, y: { title: { display: true, text: 'Volume' } } } }
+        });
     }
 
     // 🔹 EXPORT PDF & EXCEL
-    async function exportToPDF() {
-        if (!state.dataLoaded) return alert('Data belum dimuat. Klik Sync API terlebih dahulu.');
-        try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFontSize(18); doc.setTextColor(44, 62, 80);
-            doc.text('Laporan Penjualan Dashboard', 14, 20);
-            doc.setFontSize(10); doc.setTextColor(100, 110, 120);
-            doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')} | Filter: ${state.month === 'all' ? 'Semua Bulan' : 'Bulan ' + rawMockData.months[state.month]}`, 14, 28);
+    function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(18); doc.text('Laporan Penjualan Dashboard', 14, 20);
+        doc.setFontSize(10); doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, 14, 28);
+        
+        doc.autoTable({
+            head: [['Kategori', 'Unit', 'Pendapatan', 'Kontribusi']],
+            body: Array.from(document.querySelectorAll('#dataTableBody tr')).map(tr => Array.from(tr.children).map(td => td.innerText)),
+            startY: 35, theme: 'grid', headStyles: { fillColor: [52, 152, 219] }
+        });
 
-            // Tambah Tabel
-            const tableData = Array.from(document.querySelectorAll('#dataTableBody tr')).map(tr => 
-                Array.from(tr.children).map(td => td.innerText)
-            );
-            doc.autoTable({
-                head: [['Kategori', 'Unit', 'Pendapatan', 'Kontribusi']],
-                body: tableData,
-                startY: 35,
-                theme: 'grid',
-                headStyles: { fillColor: [52, 152, 219] },
-                styles: { fontSize: 9, cellPadding: 4 }
-            });
-
-            // Tambah Chart sebagai Gambar
-            const chartY = doc.lastAutoTable.finalY + 15;
-            const canvas = document.getElementById('barChart');
-            const imgData = canvas.toDataURL('image/png');
-            doc.addImage(imgData, 'PNG', 14, chartY, 180, 70);
-            
-            doc.save(`Laporan_Penjualan_${new Date().toISOString().slice(0,10)}.pdf`);
-        } catch(e) {
-            console.error('Error exporting PDF:', e);
-            alert('Gagal export PDF');
-        }
+        const imgData = document.getElementById('barChart').toDataURL('image/png');
+        doc.addImage(imgData, 'PNG', 14, doc.lastAutoTable.finalY + 15, 180, 70);
+        doc.save(`Laporan_Penjualan_${new Date().toISOString().slice(0,10)}.pdf`);
     }
 
     function exportToExcel() {
-        if (!state.dataLoaded) return alert('Data belum dimuat.');
-        try {
-            const table = document.getElementById('dataTable');
-            const wb = XLSX.utils.table_to_book(table, { sheet: "Data Penjualan" });
-            
-            // Tambah KPI ke sheet terpisah
-            const kpiData = [
-                ['KPI', 'Nilai'],
-                ['Total Pendapatan', document.getElementById('kpiRevenue').innerText],
-                ['Unit Terjual', document.getElementById('kpiUnits').innerText],
-                ['Rata-rata/Kategori', document.getElementById('kpiAvg').innerText],
-                ['Tren Pertumbuhan', document.getElementById('kpiGrowth').innerText]
-            ];
-            const wsKPI = XLSX.utils.aoa_to_sheet(kpiData);
-            XLSX.utils.book_append_sheet(wb, wsKPI, "KPI Summary");
-            
-            XLSX.writeFile(wb, `Export_Dashboard_${new Date().toISOString().slice(0,10)}.xlsx`);
-        } catch(e) {
-            console.error('Error exporting Excel:', e);
-            alert('Gagal export Excel');
-        }
+        const wb = XLSX.utils.table_to_book(document.getElementById('dataTable'), { sheet: "Data" });
+        const kpiData = [['KPI','Nilai'],['Pendapatan',document.getElementById('kpiRevenue').innerText],['Unit',document.getElementById('kpiUnits').innerText]];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpiData), "KPI");
+        XLSX.writeFile(wb, `Export_Dashboard_${new Date().toISOString().slice(0,10)}.xlsx`);
     }
 
-    // 🔹 DRAG & DROP & LAYOUT PERSISTENCE
+    // 🔹 DRAG & DROP & LAYOUT
     function initSortable() {
         const savedKPI = JSON.parse(localStorage.getItem('kpiLayout')) || null;
         const savedChart = JSON.parse(localStorage.getItem('chartLayout')) || null;
@@ -489,44 +343,29 @@
         if (savedKPI) applyOrder(document.getElementById('kpiGrid'), savedKPI);
         if (savedChart) applyOrder(document.getElementById('chartGrid'), savedChart);
 
-        new Sortable(document.getElementById('kpiGrid'), {
-            handle: '.drag-handle', animation: 200, onEnd: () => saveLayout('kpiLayout', 'kpiGrid')
-        });
-        new Sortable(document.getElementById('chartGrid'), {
-            handle: '.drag-handle', animation: 200, onEnd: () => saveLayout('chartLayout', 'chartGrid')
-        });
+        new Sortable(document.getElementById('kpiGrid'), { handle: '.drag-handle', animation: 200, onEnd: () => localStorage.setItem('kpiLayout', JSON.stringify(Array.from(document.getElementById('kpiGrid').children).map(el => el.dataset.id))) });
+        new Sortable(document.getElementById('chartGrid'), { handle: '.drag-handle', animation: 200, onEnd: () => localStorage.setItem('chartLayout', JSON.stringify(Array.from(document.getElementById('chartGrid').children).map(el => el.dataset.id))) });
     }
 
-    function saveLayout(key, gridId) {
-        const order = Array.from(document.getElementById(gridId).children).map(el => el.dataset.id);
-        localStorage.setItem(key, JSON.stringify(order));
-    }
-
-    function applyOrder(container, order) {
-        order.forEach(id => {
-            const el = container.querySelector(`[data-id="${id}"]`);
-            if (el) container.appendChild(el);
-        });
-    }
-
+    function applyOrder(container, order) { order.forEach(id => { const el = container.querySelector(`[data-id="${id}"]`); if(el) container.appendChild(el); }); }
+    function saveLayout() { alert('✅ Layout tersimpan di browser!'); }
     function clearLayoutCache() { localStorage.removeItem('kpiLayout'); localStorage.removeItem('chartLayout'); location.reload(); }
 
-    // 🔹 EVENT LISTENERS & INIT
+    // 🔹 EVENT & INIT
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('🚀 Initializing Dashboard...');
         initCharts();
         initSortable();
-        fetchAPIData(); // Auto fetch saat load
+        updateDashboard(); // Langsung load tanpa API/fetch
 
-        document.getElementById('btnRefresh').addEventListener('click', fetchAPIData);
-        document.getElementById('filterMonth').addEventListener('change', e => { state.month = e.target.value; updateDashboard(); });
-        document.getElementById('filterCategory').addEventListener('change', e => { state.category = e.target.value; updateDashboard(); });
-        document.getElementById('resetFilters').addEventListener('click', () => {
-            state = { month: 'all', category: 'all', dataLoaded: state.dataLoaded };
+        document.getElementById('btnReset').addEventListener('click', () => {
+            state = { month: 'all', category: 'all' };
             document.getElementById('filterMonth').value = 'all';
             document.getElementById('filterCategory').value = 'all';
             updateDashboard();
         });
+
+        document.getElementById('filterMonth').addEventListener('change', e => { state.month = e.target.value; updateDashboard(); });
+        document.getElementById('filterCategory').addEventListener('change', e => { state.category = e.target.value; updateDashboard(); });
 
         document.querySelectorAll('.nav-link, .tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -543,7 +382,7 @@
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
             themeBtn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
-            updateDashboard();
+            updateDashboard(); // Refresh warna chart
         });
 
         document.getElementById('menuToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
