@@ -221,47 +221,69 @@
     let charts = {};
     let rawMockData = {};
 
-    // 🔹 SIMULASI FETCH API (Ganti URL ini dengan endpoint asli nanti)
+    // 🔹 SIMULASI FETCH API - Data dimuat otomatis saat halaman load
     async function fetchAPIData() {
         showLoading(true);
-        // Simulasi delay jaringan & ambil data
-        await new Promise(res => setTimeout(res, 1200));
-        
-        rawMockData = {
-            categories: ['Elektronik', 'Fashion', 'Makanan', 'Buku', 'Olahraga'],
-            months: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
-            units: {
-                'Elektronik': [80, 95, 110, 120, 130, 145], 'Fashion': [60, 65, 70, 75, 85, 90],
-                'Makanan': [45, 48, 50, 55, 60, 65], 'Buku': [20, 22, 25, 28, 30, 32],
-                'Olahraga': [15, 16, 18, 20, 22, 25]
-            },
-            revenue: {
-                'Elektronik': [24, 28.5, 33, 36, 39, 43.5], 'Fashion': [12, 13, 14, 15, 17, 18],
-                'Makanan': [6.75, 7.2, 7.5, 8.25, 9, 9.75], 'Buku': [3, 3.3, 3.75, 4.2, 4.5, 4.8],
-                'Olahraga': [2.25, 2.4, 2.7, 3, 3.3, 3.75]
-            }
-        };
-        state.dataLoaded = true;
-        showLoading(false);
-        updateDashboard();
+        try {
+            // Simulasi delay jaringan minimal (500ms untuk UX yang baik)
+            await new Promise(res => setTimeout(res, 500));
+            
+            rawMockData = {
+                categories: ['Elektronik', 'Fashion', 'Makanan', 'Buku', 'Olahraga'],
+                months: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+                units: {
+                    'Elektronik': [80, 95, 110, 120, 130, 145], 
+                    'Fashion': [60, 65, 70, 75, 85, 90],
+                    'Makanan': [45, 48, 50, 55, 60, 65], 
+                    'Buku': [20, 22, 25, 28, 30, 32],
+                    'Olahraga': [15, 16, 18, 20, 22, 25]
+                },
+                revenue: {
+                    'Elektronik': [24, 28.5, 33, 36, 39, 43.5], 
+                    'Fashion': [12, 13, 14, 15, 17, 18],
+                    'Makanan': [6.75, 7.2, 7.5, 8.25, 9, 9.75], 
+                    'Buku': [3, 3.3, 3.75, 4.2, 4.5, 4.8],
+                    'Olahraga': [2.25, 2.4, 2.7, 3, 3.3, 3.75]
+                }
+            };
+            state.dataLoaded = true;
+            updateDashboard();
+            console.log('✅ Data berhasil dimuat');
+        } catch(e) {
+            console.error('❌ Error loading data:', e);
+            alert('Gagal memuat data. Silakan refresh halaman.');
+        } finally {
+            showLoading(false);
+        }
     }
 
-    function showLoading(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
+    function showLoading(show) { 
+        document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; 
+    }
 
     // 🔹 KALKULASI REAKTIF
     function calculateMetrics() {
+        if (!rawMockData.categories) return { fUnits: {}, fRevenue: {}, totalUnits: 0, totalRevenue: 0, filtered: [], percentages: [], avg: 0 };
+        
         let fUnits = {}, fRevenue = {}, totalUnits = 0, totalRevenue = 0;
         const cats = rawMockData.categories;
         const range = state.month === 'all' ? [0,1,2,3,4,5] : [parseInt(state.month)];
         
         cats.forEach(cat => {
             let u = 0, r = 0;
-            range.forEach(m => { u += rawMockData.units[cat][m]; r += rawMockData.revenue[cat][m]; });
-            fUnits[cat] = u; fRevenue[cat] = r;
+            range.forEach(m => { 
+                u += rawMockData.units[cat][m] || 0; 
+                r += rawMockData.revenue[cat][m] || 0; 
+            });
+            fUnits[cat] = u; 
+            fRevenue[cat] = r;
         });
 
         const filtered = state.category === 'all' ? cats : [state.category];
-        filtered.forEach(c => { totalUnits += fUnits[c]; totalRevenue += fRevenue[c]; });
+        filtered.forEach(c => { 
+            totalUnits += fUnits[c] || 0; 
+            totalRevenue += fRevenue[c] || 0; 
+        });
         const percentages = filtered.map(c => totalUnits ? ((fUnits[c] / totalUnits) * 100).toFixed(1) : 0);
         return { fUnits, fRevenue, totalUnits, totalRevenue, filtered, percentages, avg: filtered.length ? Math.round(totalUnits / filtered.length) : 0 };
     }
@@ -292,149 +314,171 @@
     }
 
     function updateCharts(m) {
+        if (!charts.pie) return; // Safety check
+        
         const labels = m.filtered;
         const colors = ['#3498db', '#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6'];
 
-        // Pie
-        charts.pie.data.labels = labels;
-        charts.pie.data.datasets[0].data = labels.map(c => m.fUnits[c]);
-        charts.pie.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
-        charts.pie.update('active');
+        try {
+            // Pie
+            charts.pie.data.labels = labels;
+            charts.pie.data.datasets[0].data = labels.map(c => m.fUnits[c]);
+            charts.pie.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
+            charts.pie.update('active');
 
-        // Bar
-        charts.bar.data.labels = labels;
-        charts.bar.data.datasets[0].data = labels.map(c => m.fUnits[c]);
-        charts.bar.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
-        charts.bar.update('active');
+            // Bar
+            charts.bar.data.labels = labels;
+            charts.bar.data.datasets[0].data = labels.map(c => m.fUnits[c]);
+            charts.bar.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
+            charts.bar.update('active');
 
-        // Line
-        charts.line.data.labels = rawMockData.months;
-        charts.line.data.datasets[0].data = rawMockData.months.map((_, i) => 
-            labels.reduce((sum, c) => sum + rawMockData.units[c][i], 0));
-        charts.line.update('active');
+            // Line
+            charts.line.data.labels = rawMockData.months;
+            charts.line.data.datasets[0].data = rawMockData.months.map((_, i) => 
+                labels.reduce((sum, c) => sum + (rawMockData.units[c][i] || 0), 0));
+            charts.line.update('active');
 
-        // Scatter
-        charts.scatter.data.datasets[0].data = labels.map(c => ({
-            x: Math.round((m.fRevenue[c] / m.fUnits[c]) * 1000000),
-            y: m.fUnits[c], label: c
-        }));
-        charts.scatter.update('active');
+            // Scatter
+            charts.scatter.data.datasets[0].data = labels.map(c => ({
+                x: Math.round((m.fRevenue[c] / m.fUnits[c]) * 1000000),
+                y: m.fUnits[c], label: c
+            }));
+            charts.scatter.update('active');
+        } catch(e) {
+            console.error('Error updating charts:', e);
+        }
     }
 
     // 🔹 INISIALISASI CHART & ANIMASI
     function initCharts() {
-        const animConfig = { animation: { duration: 900, easing: 'easeOutQuart' } };
-        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
-        const textSecondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
-        const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+        try {
+            const animConfig = { animation: { duration: 900, easing: 'easeOutQuart' } };
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#2c3e50';
+            const textSecondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#7f8c8d';
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#e0e6ed';
 
-        const baseOpts = {
-            responsive: true, 
-            maintainAspectRatio: false,
-            plugins: { 
-                legend: { position: 'bottom', labels: { color: textColor } }, 
-                title: { display: false } 
-            },
-            scales: { 
-                x: { ticks: { color: textSecondaryColor }, grid: { color: gridColor } },
-                y: { ticks: { color: textSecondaryColor }, grid: { color: gridColor } }
-            },
-            ...animConfig
-        };
-
-        charts.pie = new Chart(document.getElementById('pieChart'), {
-            type: 'pie', 
-            data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 2, borderColor: '#fff' }] },
-            options: { 
+            const baseOpts = {
                 responsive: true, 
-                maintainAspectRatio: false, 
+                maintainAspectRatio: false,
                 plugins: { 
-                    legend: { position: 'right' }, 
-                    tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} unit` } } 
-                }, 
-                ...animConfig
-            }
-        });
-
-        charts.bar = new Chart(document.getElementById('barChart'), {
-            type: 'bar', 
-            data: { labels: [], datasets: [{ label: 'Unit', data: [], backgroundColor: [], borderRadius: 6 }] },
-            options: { 
-                ...baseOpts, 
-                plugins: { legend: { display: false } }, 
-                scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, beginAtZero: true } } 
-            }
-        });
-
-        charts.line = new Chart(document.getElementById('lineChart'), {
-            type: 'line', 
-            data: { labels: [], datasets: [{ label: 'Tren', data: [], borderColor: '#3498db', tension: 0.4, fill: true, backgroundColor: 'rgba(52,152,219,0.15)' }] },
-            options: { ...baseOpts, plugins: { legend: { display: false } } }
-        });
-
-        charts.scatter = new Chart(document.getElementById('scatterChart'), {
-            type: 'scatter', 
-            data: { datasets: [{ label: 'Harga vs Volume', data: [], backgroundColor: '#9b59b6', pointRadius: 8, pointHoverRadius: 12 }] },
-            options: { 
-                ...baseOpts, 
+                    legend: { position: 'bottom', labels: { color: textColor } }, 
+                    title: { display: false } 
+                },
                 scales: { 
-                    x: { ...baseOpts.scales.x, title: { display: true, text: 'Harga Rata-rata (Rp)' } }, 
-                    y: { ...baseOpts.scales.y, title: { display: true, text: 'Volume Terjual' } } 
-                } 
-            }
-        });
+                    x: { ticks: { color: textSecondaryColor }, grid: { color: gridColor } },
+                    y: { ticks: { color: textSecondaryColor }, grid: { color: gridColor } }
+                },
+                ...animConfig
+            };
+
+            charts.pie = new Chart(document.getElementById('pieChart'), {
+                type: 'pie', 
+                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 2, borderColor: '#fff' }] },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { position: 'right' }, 
+                        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} unit` } } 
+                    }, 
+                    ...animConfig
+                }
+            });
+
+            charts.bar = new Chart(document.getElementById('barChart'), {
+                type: 'bar', 
+                data: { labels: [], datasets: [{ label: 'Unit', data: [], backgroundColor: [], borderRadius: 6 }] },
+                options: { 
+                    ...baseOpts, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, beginAtZero: true } } 
+                }
+            });
+
+            charts.line = new Chart(document.getElementById('lineChart'), {
+                type: 'line', 
+                data: { labels: [], datasets: [{ label: 'Tren', data: [], borderColor: '#3498db', tension: 0.4, fill: true, backgroundColor: 'rgba(52,152,219,0.15)' }] },
+                options: { ...baseOpts, plugins: { legend: { display: false } } }
+            });
+
+            charts.scatter = new Chart(document.getElementById('scatterChart'), {
+                type: 'scatter', 
+                data: { datasets: [{ label: 'Harga vs Volume', data: [], backgroundColor: '#9b59b6', pointRadius: 8, pointHoverRadius: 12 }] },
+                options: { 
+                    ...baseOpts, 
+                    scales: { 
+                        x: { ...baseOpts.scales.x, title: { display: true, text: 'Harga Rata-rata (Rp)' } }, 
+                        y: { ...baseOpts.scales.y, title: { display: true, text: 'Volume Terjual' } } 
+                    } 
+                }
+            });
+            
+            console.log('✅ Charts initialized successfully');
+        } catch(e) {
+            console.error('❌ Error initializing charts:', e);
+        }
     }
 
     // 🔹 EXPORT PDF & EXCEL
     async function exportToPDF() {
         if (!state.dataLoaded) return alert('Data belum dimuat. Klik Sync API terlebih dahulu.');
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        doc.setFontSize(18); doc.setTextColor(44, 62, 80);
-        doc.text('Laporan Penjualan Dashboard', 14, 20);
-        doc.setFontSize(10); doc.setTextColor(100, 110, 120);
-        doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')} | Filter: ${state.month === 'all' ? 'Semua Bulan' : 'Bulan ' + rawMockData.months[state.month]}`, 14, 28);
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18); doc.setTextColor(44, 62, 80);
+            doc.text('Laporan Penjualan Dashboard', 14, 20);
+            doc.setFontSize(10); doc.setTextColor(100, 110, 120);
+            doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')} | Filter: ${state.month === 'all' ? 'Semua Bulan' : 'Bulan ' + rawMockData.months[state.month]}`, 14, 28);
 
-        // Tambah Tabel
-        const tableData = Array.from(document.querySelectorAll('#dataTableBody tr')).map(tr => 
-            Array.from(tr.children).map(td => td.innerText)
-        );
-        doc.autoTable({
-            head: [['Kategori', 'Unit', 'Pendapatan', 'Kontribusi']],
-            body: tableData,
-            startY: 35,
-            theme: 'grid',
-            headStyles: { fillColor: [52, 152, 219] },
-            styles: { fontSize: 9, cellPadding: 4 }
-        });
+            // Tambah Tabel
+            const tableData = Array.from(document.querySelectorAll('#dataTableBody tr')).map(tr => 
+                Array.from(tr.children).map(td => td.innerText)
+            );
+            doc.autoTable({
+                head: [['Kategori', 'Unit', 'Pendapatan', 'Kontribusi']],
+                body: tableData,
+                startY: 35,
+                theme: 'grid',
+                headStyles: { fillColor: [52, 152, 219] },
+                styles: { fontSize: 9, cellPadding: 4 }
+            });
 
-        // Tambah Chart sebagai Gambar
-        const chartY = doc.lastAutoTable.finalY + 15;
-        const canvas = document.getElementById('barChart');
-        const imgData = canvas.toDataURL('image/png');
-        doc.addImage(imgData, 'PNG', 14, chartY, 180, 70);
-        
-        doc.save(`Laporan_Penjualan_${new Date().toISOString().slice(0,10)}.pdf`);
+            // Tambah Chart sebagai Gambar
+            const chartY = doc.lastAutoTable.finalY + 15;
+            const canvas = document.getElementById('barChart');
+            const imgData = canvas.toDataURL('image/png');
+            doc.addImage(imgData, 'PNG', 14, chartY, 180, 70);
+            
+            doc.save(`Laporan_Penjualan_${new Date().toISOString().slice(0,10)}.pdf`);
+        } catch(e) {
+            console.error('Error exporting PDF:', e);
+            alert('Gagal export PDF');
+        }
     }
 
     function exportToExcel() {
         if (!state.dataLoaded) return alert('Data belum dimuat.');
-        const table = document.getElementById('dataTable');
-        const wb = XLSX.utils.table_to_book(table, { sheet: "Data Penjualan" });
-        
-        // Tambah KPI ke sheet terpisah
-        const kpiData = [
-            ['KPI', 'Nilai'],
-            ['Total Pendapatan', document.getElementById('kpiRevenue').innerText],
-            ['Unit Terjual', document.getElementById('kpiUnits').innerText],
-            ['Rata-rata/Kategori', document.getElementById('kpiAvg').innerText],
-            ['Tren Pertumbuhan', document.getElementById('kpiGrowth').innerText]
-        ];
-        const wsKPI = XLSX.utils.aoa_to_sheet(kpiData);
-        XLSX.utils.book_append_sheet(wb, wsKPI, "KPI Summary");
-        
-        XLSX.writeFile(wb, `Export_Dashboard_${new Date().toISOString().slice(0,10)}.xlsx`);
+        try {
+            const table = document.getElementById('dataTable');
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Data Penjualan" });
+            
+            // Tambah KPI ke sheet terpisah
+            const kpiData = [
+                ['KPI', 'Nilai'],
+                ['Total Pendapatan', document.getElementById('kpiRevenue').innerText],
+                ['Unit Terjual', document.getElementById('kpiUnits').innerText],
+                ['Rata-rata/Kategori', document.getElementById('kpiAvg').innerText],
+                ['Tren Pertumbuhan', document.getElementById('kpiGrowth').innerText]
+            ];
+            const wsKPI = XLSX.utils.aoa_to_sheet(kpiData);
+            XLSX.utils.book_append_sheet(wb, wsKPI, "KPI Summary");
+            
+            XLSX.writeFile(wb, `Export_Dashboard_${new Date().toISOString().slice(0,10)}.xlsx`);
+        } catch(e) {
+            console.error('Error exporting Excel:', e);
+            alert('Gagal export Excel');
+        }
     }
 
     // 🔹 DRAG & DROP & LAYOUT PERSISTENCE
@@ -469,6 +513,7 @@
 
     // 🔹 EVENT LISTENERS & INIT
     document.addEventListener('DOMContentLoaded', () => {
+        console.log('🚀 Initializing Dashboard...');
         initCharts();
         initSortable();
         fetchAPIData(); // Auto fetch saat load
@@ -498,7 +543,6 @@
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
             themeBtn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
-            // Refresh chart colors untuk dark mode
             updateDashboard();
         });
 
