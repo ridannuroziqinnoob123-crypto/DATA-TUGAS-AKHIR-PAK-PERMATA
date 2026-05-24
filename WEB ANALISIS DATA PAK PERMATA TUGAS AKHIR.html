@@ -324,32 +324,64 @@
     // 🔹 INISIALISASI CHART & ANIMASI
     function initCharts() {
         const animConfig = { animation: { duration: 900, easing: 'easeOutQuart' } };
-        const baseOpts = (title) => ({
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text') } }, title: { display: false } },
-            scales: { x: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') }, grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') } },
-                     y: { ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') }, grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border') } } },
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+        const textSecondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+        const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+
+        const baseOpts = {
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: textColor } }, 
+                title: { display: false } 
+            },
+            scales: { 
+                x: { ticks: { color: textSecondaryColor }, grid: { color: gridColor } },
+                y: { ticks: { color: textSecondaryColor }, grid: { color: gridColor } }
+            },
             ...animConfig
-        });
+        };
 
         charts.pie = new Chart(document.getElementById('pieChart'), {
-            type: 'pie', data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 2, borderColor: '#fff' }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} unit` } } }, ...animConfig }
+            type: 'pie', 
+            data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 2, borderColor: '#fff' }] },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { position: 'right' }, 
+                    tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} unit` } } 
+                }, 
+                ...animConfig
+            }
         });
 
         charts.bar = new Chart(document.getElementById('barChart'), {
-            type: 'bar', data: { labels: [], datasets: [{ label: 'Unit', data: [], backgroundColor: [], borderRadius: 6 }] },
-            options: { ...baseOpts(), plugins: { legend: { display: false } }, scales: { ...baseOpts().scales, y: { ...baseOpts().scales.y, beginAtZero: true } } }
+            type: 'bar', 
+            data: { labels: [], datasets: [{ label: 'Unit', data: [], backgroundColor: [], borderRadius: 6 }] },
+            options: { 
+                ...baseOpts, 
+                plugins: { legend: { display: false } }, 
+                scales: { ...baseOpts.scales, y: { ...baseOpts.scales.y, beginAtZero: true } } 
+            }
         });
 
         charts.line = new Chart(document.getElementById('lineChart'), {
-            type: 'line', data: { labels: [], datasets: [{ label: 'Tren', data: [], borderColor: '#3498db', tension: 0.4, fill: true, backgroundColor: 'rgba(52,152,219,0.15)' }] },
-            options: { ...baseOpts(), plugins: { legend: { display: false } } }
+            type: 'line', 
+            data: { labels: [], datasets: [{ label: 'Tren', data: [], borderColor: '#3498db', tension: 0.4, fill: true, backgroundColor: 'rgba(52,152,219,0.15)' }] },
+            options: { ...baseOpts, plugins: { legend: { display: false } } }
         });
 
         charts.scatter = new Chart(document.getElementById('scatterChart'), {
-            type: 'scatter', data: { datasets: [{ label: 'Harga vs Volume', data: [], backgroundColor: '#9b59b6', pointRadius: 8, pointHoverRadius: 12 }] },
-            options: { ...baseOpts(), scales: { x: { title: { display: true, text: 'Harga Rata-rata (Rp)' } }, y: { title: { display: true, text: 'Volume Terjual' } } } }
+            type: 'scatter', 
+            data: { datasets: [{ label: 'Harga vs Volume', data: [], backgroundColor: '#9b59b6', pointRadius: 8, pointHoverRadius: 12 }] },
+            options: { 
+                ...baseOpts, 
+                scales: { 
+                    x: { ...baseOpts.scales.x, title: { display: true, text: 'Harga Rata-rata (Rp)' } }, 
+                    y: { ...baseOpts.scales.y, title: { display: true, text: 'Volume Terjual' } } 
+                } 
+            }
         });
     }
 
